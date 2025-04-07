@@ -1,76 +1,67 @@
-# OpenAI Realtime API Python Edition
+# OpenAI Realtime API Edición Python
 
-Python implementation of OpenAI's realtime API
+Implementación en Python de la API en tiempo real de OpenAI
 
-OpenAI have a Node.js + JavaScript wrapper [here](https://github.com/openai/openai-realtime-api-beta), as well as a [openai-realtime-console](https://github.com/openai/openai-realtime-console) demo-project, but as yet nothing in Python, so here's a start at fixing that!
+OpenAI tiene un wrapper en Node.js + JavaScript [aquí](https://github.com/openai/openai-realtime-api-beta), así como un proyecto de demostración [openai-realtime-console](https://github.com/openai/openai-realtime-console), pero hasta ahora nada en Python, ¡así que aquí está un comienzo para solucionarlo!
 
-### A couple of useful links:
-- [Guide](https://platform.openai.com/docs/guides/realtime)
-- [API Reference](https://platform.openai.com/docs/api-reference/realtime-client-events)
+### Un par de enlaces útiles:
+- [Guía](https://platform.openai.com/docs/guides/realtime)
+- [Referencia de la API](https://platform.openai.com/docs/api-reference/realtime-client-events)
 
+# Cómo ponerlo en marcha
 
-# Getting it running
-
-- Create a Virtual Environment if you want to: `python -m venv .venv ;  ./.venv/bin/activate`
+- Crea un Entorno Virtual si lo deseas: `python -m venv .venv ; ./.venv/bin/activate`
 
 - `pip install -r requirements.txt`
 
-- Create a `.env` file like `.env.template` filling in your OpenAI API key
+- Crea un archivo `.env` similar a `.env.template` completando tu clave API de OpenAI
 
-- Run it
+- Ejecútalo
 
-You can run the legacy files: `python legacy/realtime-simple.py` or `python legacy/realtime-classes.py` which work while being minimal (especially the first one). Probably good for getting a feeling of how it works.
+Puedes ejecutar los archivos legacy: `python legacy/realtime-simple.py` o `python legacy/realtime-classes.py`, que funcionan siendo mínimos (especialmente el primero). Probablemente sean útiles para entender cómo funciona.
 
-Alternatively `cd src; python main.py` -- this is the codebase I'll be building off moving forwards.
+Alternativamente, `cd src; python main.py` -- este es el código base que usaré para desarrollos futuros.
 
-
-# Notes:
+# Notas:
 
 ## legacy/
-- `legacy/realtime-simple.py` is "Least number of lines that gets the job done"
-- `legacy/realtime-classes.py` is arguably tidier
+- `legacy/realtime-simple.py` es "El menor número de líneas que hace el trabajo"
+- `legacy/realtime-classes.py` es posiblemente más ordenado
 
-Both work! The AI talks to you, and you can talk back.
+¡Ambos funcionan! La IA habla contigo y tú puedes responderle.
 
-I have to mute the mic while the AI is speaking, else it gets back its own audio and gets very (entertainingly) confused. "Hello, I'm a helpful assistant!" "Gosh, so am I!" "What a coincidence!" "I know, right?!", etc.
+Tengo que silenciar el micrófono mientras la IA está hablando, de lo contrario recibe su propio audio y se confunde (de manera entretenida). "¡Hola, soy un asistente útil!" "¡Vaya, yo también!" "¡Qué coincidencia!" "¡Lo sé, ¿verdad?!", etc.
 
-## src/ (current/future)
-I've abstracted websocket-stuff and audioIO-stuff into Socket.py and AudioIO.py, which leaves Realtime.py free to make more sense.
+## src/ (actual/futuro)
+He abstraído lo relacionado con websockets y audioIO en Socket.py y AudioIO.py, lo que deja Realtime.py libre para tener más sentido.
 
-I did take a run at doing this async with Trio, but at this point it just gets in the way. Maybe I'll return to an async model. I'm not sold on it, much as I love Trio; exception-handling and teardown are a pain.
+Intenté hacer esto de manera asíncrona con Trio, pero en este punto solo estorba. Quizás vuelva a un modelo asíncrono. No estoy convencido, por mucho que me guste Trio; el manejo de excepciones y la finalización son un dolor.
 
-## Additional note (7 Oct 2024)
-After some testing, it's clear that legacy/realtime-simple.py functions crisply, and there is some responsiveness issue with src/.
+## Nota adicional (7 Oct 2024)
+Tras algunas pruebas, está claro que legacy/realtime-simple.py funciona con precisión, mientras que src/ tiene problemas de capacidad de respuesta.
 
-This could be a locking issue, with audio arriving from the websocket into an input buffer, which is, on a worker thread, drained to the speakers. It could be with mic-data, which is buffered in a worker thread and drained to the websocket. It could be both, and/or something else.
+Podría ser un problema de bloqueo, con el audio llegando desde el websocket a un búfer de entrada, que es, en un hilo de trabajo, enviado a los altavoces. Podría ser con los datos del micrófono, que se almacenan en un hilo de trabajo y se envían al websocket. Podría ser ambos, y/o algo más.
 
-Python is not an ideal language for realtime audio processing, and likely this was factored into account by the OpenAI team's decision to initially publish only a Node.js implementation.
+Python no es un lenguaje ideal para el procesamiento de audio en tiempo real, y es probable que esto se tuviera en cuenta en la decisión del equipo de OpenAI de publicar inicialmente solo una implementación en Node.js.
 
-# Vision
+# Visión
 
-It would be nice to clean this up to act as a fully-featured Python API for this service.
+Sería bueno limpiar esto para que actúe como una API Python completa para este servicio.
 
+# POR HACER
 
-# TODO
+- Primero hay que revisar el código para asegurar un esqueleto limpio y robusto.
 
-- Firstly the code needs picking through, to ensure a clean / robust skeleton.
+- EDIT: En realidad, la arquitectura en src/ necesita ser revisada, para tener en cuenta la Nota Adicional anterior.
 
-- EDIT: Actually the architecture in src/ needs to be revised, to account for the above Additional Note.
+- Necesito pensar en qué debería exponer dicha biblioteca y cómo hacerlo (por ejemplo, callbacks).
 
-- Need some thought on what such a lib should expose & how to expose it (e.g. callbacks).
+- Ampliar el soporte de la API (es una API bastante grande).
 
-- Fleshing out API support (it's quite a big API).
+- Uso de herramientas / Llamadas a funciones.
 
-- Tool-Use / Function-Calling.
+- Soporte para interrupciones del usuario mediante cancelación de feedback (actualmente tengo que silenciar el micrófono mientras se reproduce el audio de OpenAI por los altavoces, lo que significa que no puedo interrumpirlo). Existe AEC (Cancelación de Eco Adaptativa) en WebRTC, pero no encuentro ninguna biblioteca pip lista para usar que no requiera ajustes (construir dependencias). Tal vez `pip install adaptfilt` sea una buena solución. Parece factible.
 
-- User-interruption-support via feedback cancellation (currently I'm having to mute the mic while openAI audio is playing out of the speakers, which means I can't interrupt it). There's WebRTC AEC (Adaptive Echo Cancellation), but I can't find any off-the-shelf pip library that doesn't require fiddling (building deps). Maybe `pip install adaptfilt` is a good solution. This looks doable.
+# ¡Participa!
 
-
-# Do involve!
-
-Contributions are invited, in which case you are welcome to contact the author (You'll find a link to the sap.ient.ai Discord on https://github.com/sap-ient-ai upon which I exist as `_p_i_`).
-
-
-# Thanks
-
-Thanks to https://www.naptha.ai/ for providing vital funding that allows me to Do My Own Thing.
+Se invitan contribuciones, en cuyo caso eres bienvenido a contactar al autor (encontrarás un enlace al Discord de sap.ient.ai en https://github.com/sap-ient-ai donde existo como `_p_i_`).
